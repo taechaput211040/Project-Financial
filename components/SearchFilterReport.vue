@@ -6,61 +6,163 @@
           <v-col cols="12">
             <v-row align="baseline">
               <p class="font-weight-bold">เริ่ม</p>
-              <v-col cols="7">
-                <el-date-picker
-                  class="full-width"
-                  v-model.trim="filter.startDate"
-                  arrow-control
-                  placeholder="วันที่"
-                  style="width: 100%"
-                />
-              </v-col>
-              <!-- <v-col>
-                <el-time-picker
-                  class="full-width"
-                  v-model.trim="filter.startTime"
-                  format="HH:mm"
-                  arrow-control
-                  placeholder="เวลา"
-                  style="width: 100%"
+              <v-col cols="11">
+                <v-menu
+                  ref="menu"
+                  v-model="menu"
+                  :close-on-content-click="false"
+                  :return-value.sync="filter.startDate"
+                  transition="scale-transition"
+                  offset-y
+                  min-width="auto"
                 >
-                </el-time-picker>
-              </v-col> -->
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-text-field
+                      dense
+                      v-model="filter.startDate"
+                      label="จากวันที่ :"
+                      prepend-icon="mdi-calendar"
+                      readonly
+                      hide-details="auto"
+                      outlined
+                      v-bind="attrs"
+                      v-on="on"
+                    ></v-text-field>
+                  </template>
+                  <v-date-picker
+                    v-model.trim="filter.startDate"
+                    :max="filter.endDate"
+                    no-title
+                    scrollable
+                    locale="th"
+                    @input="$refs.menu.save(filter.startDate)"
+                  >
+                  </v-date-picker>
+                </v-menu>
+              </v-col>
             </v-row>
           </v-col>
           <v-col cols="12">
             <v-row align="baseline">
               <p class="font-weight-bold">ถึง</p>
-              <v-col cols="7">
-                <el-date-picker
-                  class="full-width"
-                  v-model.trim="filter.endDate"
-                  arrow-control
-                  placeholder="วันที่"
-                  style="width: 100%"
-                />
+              <v-col cols="11">
+                <v-menu
+                  ref="menu2"
+                  v-model="menu2"
+                  :close-on-content-click="false"
+                  :return-value.sync="filter.endDate"
+                  transition="scale-transition"
+                  offset-y
+                  min-width="auto"
+                >
+                  <template v-slot:activator="{ on, attrs }">
+                    <v-text-field
+                      v-model="filter.endDate"
+                      label="ถึงวันที่"
+                      dense
+                      outlined
+                      prepend-icon="mdi-calendar"
+                      readonly
+                      v-bind="attrs"
+                      v-on="on"
+                      hide-details="auto"
+                    ></v-text-field>
+                  </template>
+                  <v-date-picker
+                    v-model.trim="filter.endDate"
+                    no-title
+                    scrollable
+                    :min="filter.startDate"
+                    locale="th"
+                    @input="$refs.menu2.save(filter.endDate)"
+                  >
+                  </v-date-picker>
+                </v-menu>
               </v-col>
-              <!-- <v-col>
-                <el-time-picker class="full-width" v-model.trim="filter.endTime" format="HH:mm" arrow-control
-                  placeholder="เวลา" style="width: 100%">
-                </el-time-picker></v-col> -->
-            </v-row>
-          </v-col></v-row
-        > </v-col
+            </v-row> </v-col
+        ></v-row> </v-col
       ><v-divider vertical class="display-mb"></v-divider>
       <v-col cols="12" md="6" lg="6">
         <v-row>
           <v-col cols="8" md="8" v-if="searchinput == true">
+            <v-select
+              label="ตัวเลือกการค้นหา"
+              dense
+              v-model.trim="filter.options"
+              outlined
+              clearable
+              :items="optional"
+              hide-details="auto"
+            ></v-select
+          ></v-col>
+          <v-col cols="8" md="8" v-if="searchinput == true && filter.options">
             <v-text-field
-              label="ค้นหาด้วย username"
+              v-if="filter.options == 'operator'"
+              :label="
+                `ค้นหาด้วย ${
+                  optional.find(x => x.value === filter.options).text
+                }`
+              "
               placeholder="กรอกคำค้นหา"
               dense
               v-model.trim="filter.inputfilter"
               outlined
               clearable
               hide-details="auto"
-            ></v-text-field
-          ></v-col>
+            ></v-text-field>
+            <v-select
+              v-else-if="filter.options == 'status'"
+              outlined
+              clearable
+              dense
+              :items="statuslist"
+              v-model="filter.inputfilter"
+              label="สถานะ"
+            ></v-select>
+            <v-menu
+              v-else-if="filter.options == 'due_date'"
+              ref="menu3"
+              v-model="menu3"
+              :close-on-content-click="false"
+              :return-value.sync="filter.inputfilter"
+              transition="scale-transition"
+              offset-y
+              min-width="auto"
+            >
+              <template v-slot:activator="{ on, attrs }">
+                <v-text-field
+                  v-model="filter.inputfilter"
+                  label="เลือกวันครบกำหนดชำระ"
+                  dense
+                  outlined
+                  prepend-icon="mdi-calendar"
+                  readonly
+                  v-bind="attrs"
+                  v-on="on"
+                  hide-details="auto"
+                ></v-text-field>
+              </template>
+              <v-date-picker
+                v-model.trim="filter.inputfilter"
+                no-title
+                scrollable
+                locale="th"
+                @input="$refs.menu3.save(filter.inputfilter)"
+              >
+              </v-date-picker>
+            </v-menu>
+            <v-select
+              v-if="filter.options == 'company'"
+              outlined
+              clearable
+              dense
+              item-value="company"
+              label="เลือกรายชื่อบริษัท"
+              item-text="company"
+              :items="companyList"
+              v-model="filter.inputfilter"
+            ></v-select>
+          </v-col>
           <v-col
             cols="4"
             md="3"
@@ -72,13 +174,6 @@
               ค้นหา</v-btn
             ></v-col
           >
-          <v-col cols="8" class="d-flex">
-            <v-btn color="success" class="mx-1" dark @click="toyesterday()"
-              ><v-icon left>mdi-menu-left</v-icon> เมื่อวาน</v-btn
-            ><v-btn color="warning" class="mx-1" @click="today()"
-              >วันนี้<v-icon right>mdi-circle-medium</v-icon></v-btn
-            >
-          </v-col>
         </v-row>
       </v-col>
     </v-row>
@@ -86,14 +181,37 @@
 </template>
 <script>
 import dayjs from "dayjs";
+import th from "dayjs/locale/th";
 
 export default {
   data() {
     return {
-      inputdata: ""
+      companyList: [],
+      menu: false,
+      menu2: false,
+      menu3: false,
+      inputdata: "",
+      statuslist: [
+        { text: "ทั้งหมด", value: null },
+        { text: "สำเร็จ", value: true },
+        { text: "ไม่สำเร็จ", value: false }
+      ],
+      optional: [
+        { text: "ตัวช่วยการค้นหา", value: null },
+        { text: "วันครบกำหนดชำระ", value: "due_date" },
+        { text: "Company", value: "company" },
+        { text: "สถานะการดำเนินการ", value: "status" },
+        { text: "Operator", value: "operator" }
+      ]
     };
   },
-
+  watch: {
+    "filter.options"(newVal) {
+      if (newVal) {
+        this.filter.inputfilter = null;
+      }
+    }
+  },
   props: {
     filter: Object,
     searchinput: {
@@ -102,95 +220,27 @@ export default {
     },
     keyword: ""
   },
+  fetch() {
+    this.getCompany();
+  },
   methods: {
-    getDateTime(date, time) {
-      let dateFormat = "YYYY-MM-DD";
-      let timeFormat = "HH:mm:ss";
-      return this.$moment(
-        `${this.$moment(date).format(dateFormat)} ${this.$moment(time).format(
-          timeFormat
-        )}`,
-        "YYYY-MM-DD HH:mm:ss"
-      )
-        .utc()
-        .format(`${dateFormat} ${timeFormat}`);
-    },
     getFilterParameter() {
-      let start = undefined;
-      let end = undefined;
-      if (this.filter.startDate) {
-        if (this.filter.startTime) {
-          start = this.getDateTime(
-            this.filter.startDate,
-            this.filter.startTime
-          );
-        } else {
-          start = this.getDateTime(
-            this.filter.startDate,
-            new Date().setHours(0, 0, 0, 0)
-          );
-        }
-      }
-      if (this.filter.endDate) {
-        if (this.filter.endTime) {
-          end = this.getDateTime(this.filter.endDate, this.filter.endTime);
-        } else {
-          end = this.getDateTime(
-            this.filter.endDate,
-            new Date().setHours(23, 59, 59, 999)
-          );
-        }
-      }
       let params = {
-        startDate: this.$moment(start).format("YYYY-MM-DD HH:mm:ss") + "Z",
-        endDate: this.$moment(end).format("YYYY-MM-DD HH:mm:ss") + "Z",
-        search: this.filter.inputfilter
-      };
-
-      return params;
-    },
-    setYesterday() {
-      let params = {
-        startDate: dayjs()
-          .add(-1, "day")
-          .startOf("day")
-          .toISOString(),
-        endDate: dayjs()
-          .add(-1, "day")
-          .endOf("day")
-          .toISOString(),
+        startDate: dayjs(this.filter.startDate).format("YYYY-MM-DD"),
+        endDate: dayjs(this.filter.endDate).format("YYYY-MM-DD"),
         search: this.filter.inputfilter
       };
       this.filter.startDate = params.startDate;
       this.filter.endDate = params.endDate;
       return params;
     },
-    setToday() {
-      let params = {
-        startDate: dayjs()
-          .startOf("day")
-          .toISOString(),
-        endDate: dayjs()
-          .endOf("day")
-          .toISOString(),
-        search: this.filter.inputfilter
-      };
-      this.filter.startDate = params.startDate;
-      this.filter.endDate = params.endDate;
-      return params;
+    async getCompany() {
+      let { data } = await this.$store.dispatch("getCompanylist");
+      this.companyList = data;
     },
     search() {
       let response = this.getFilterParameter();
-
       this.$emit("search", response);
-    },
-    toyesterday() {
-      let response = this.setYesterday();
-      this.$emit("yesterday", response);
-    },
-    today() {
-      let response = this.setToday();
-      this.$emit("today", response);
     }
   }
 };

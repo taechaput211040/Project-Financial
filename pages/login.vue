@@ -20,8 +20,9 @@
                 <div class="pa-2">
                   <v-text-field
                     label="พาสเวิร์ด"
+                    type="password"
                     outlined
-                    v-model="formLogin.Password"
+                    v-model="formLogin.password"
                     dense
                     hide-details="auto"
                     rounded
@@ -52,17 +53,18 @@ export default {
     return {
       formLogin: {
         username: "",
-        Password: ""
+        passsword: ""
       }
     };
   },
   methods: {
     async login() {
       try {
-        // let res = await this.$store.dispatch("auth/login", this.formLogin);
-        // if (res.key) {
+        let res = await this.$store.dispatch(`actionLogin`, this.formLogin);
+        console.log(res);
+        if (res.data.token) {
           this.$router.push("/");
-        // }
+        }
       } catch (error) {
         console.log(error);
       }

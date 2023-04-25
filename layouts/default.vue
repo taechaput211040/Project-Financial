@@ -37,8 +37,7 @@
       width="280"
     >
       <v-toolbar-title class="font-weight-bold text-center pa-3" align-center>
-        <h1>SUPPORT</h1>
-        <h2 class="warning--text">SMARTBET</h2>
+        <h1>Financial System</h1>
       </v-toolbar-title>
       <v-list nav dense>
         <div v-for="(link, i) in items" :key="i">
@@ -130,124 +129,33 @@ export default {
       fixed: false,
       items: [
         {
-          title: "ประวัติการโยกเงิน",
+          title: "รายรับ-รายจ่าย",
           icon: "mdi-history",
           to: "/",
           status: true
         },
         {
-          title: "เปิด-ปิด เว็ปไซต์",
+          title: "รายงานยอดเสีย",
+          icon: "mdi-history",
+          to: "/dept",
+          status: true
+        },
+        {
+          title: "รายงานรายเดือน",
           icon: "mdi-toggle-switch",
-          to: "/webManagement",
+          to: "/monthlyReport",
           status: true
         },
         {
-          title: "เปิด-ปิด feature",
+          title: "พนักงาน",
           icon: "mdi-tune",
-          to: "/systemfeature",
-          status: true
-        },
-        {
-          title: "เช็คข้อมูลปัจจุบัน/จำนวนเทิร์น",
-          icon: "mdi-timetable",
-          to: "/member/memberCheck",
-          status: true
-        },
-        {
-          title: "เช็คข้อมูลการเล่น",
-          icon: "mdi-ticket",
-          to: "/member/memberReportTransaction",
-          status: true
-        },
-
-        {
-          title: "ข้อมูลเว็ปไซต์",
-          icon: "mdi-feature-search",
-          to: "/webinfo",
-          status: true
-        },
-        {
-          title: "ข้อมูล Cashback",
-          icon: "mdi-cash-refund",
-          to: "/checkCashback",
-          status: true
-        },
-        {
-          title: "รายงาน/การตั้งค่าลิงก์รับทรัพย์",
-          icon: "mdi-chart-line",
-          to: "/affiliate/report",
-          status: true
-        },
-        {
-          title: "ข้อมูลสมาชิกลิงก์รับทรัพย์",
-          icon: "mdi-treasure-chest",
-          to: "/affiliate/userInfo",
-          status: true
-        },
-        {
-          title: "ข้อมูลสมาชิก",
-          icon: "mdi-account",
-          to: "/checkMember",
-          status: true
-        },
-        {
-          title: "เช็คข้อมูลรายการผิดพลาด",
-          icon: "mdi-account",
-          to: "/ManualEditCredit",
-          status: true
-        },
-        {
-          title: "เช็คข้อมูลโปรโมชั่น",
-          icon: "mdi-gift-open",
-          to: "/generalPromotion",
-          status: true
-        },
-        {
-          title: "จัดการ Landing Page",
-          icon: "mdi-monitor-shimmer",
-          to: "/landingpage",
-          status: true
-        },
-        {
-          title: "จัดการ Member Page",
-          icon: "mdi-monitor-dashboard",
-          to: "/memberpage",
-          status: true
-        },
-        {
-          title: "เปิด-ปิด ค่ายเกม",
-          icon: "mdi-controller-classic",
-          to: "/gamefeature",
-          status: true
-        },
-        {
-          title: "เชคเครดิตเอเย่น",
-          icon: "mdi-credit-card-clock",
-          to: "/checkCreditAgent",
-          status: true
-        },
-        {
-          title: "ลงทะเบียน SCB API",
-          icon: "mdi-bank",
-          to: "/ScbManagement",
-          status: true
-        },
-        {
-          title: "สร้างข้อมูล Macrodroid",
-          icon: "mdi-android",
-          to: "/MacrodroidInfo",
+          to: "/user",
           status: true
         }
       ]
     };
   },
-  watch: {
-    options: {
-      async handler() {
-        await this.getsatatusBank();
-      }
-    }
-  },
+
   mounted() {},
   async fetch() {},
 

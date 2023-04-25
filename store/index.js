@@ -1,125 +1,170 @@
 import Vue from "vue";
 import Vuex from "vuex";
-import auth from "./auth";
-import member from "./member";
-import promotion from "./promotion";
-import ElementUI from "element-ui";
-import "element-ui/lib/theme-chalk/index.css";
-import locale from "element-ui/lib/locale/lang/th";
-// we first import the module
-import VueSweetalert2 from "vue-sweetalert2";
-import "sweetalert2/dist/sweetalert2.min.css";
-import setting from "./setting";
-import moment from "moment";
-Vue.prototype.$moment = moment;
-Vue.use(ElementUI, { locale });
-Vue.use(VueSweetalert2);
 Vue.use(Vuex);
 export default function(/* { ssrContext } */) {
   const Store = new Vuex.Store({
     state: {
-      bank: [
-        {
-          value: "WAVEPAY",
-          code: "WAVEPAY",
-          text: "WAVEPAY"
-        },
-        {
-          value: "KBANK",
-          code: "KBANK",
-          text: "ธนาคารกสิกรไทย"
-        },
-        {
-          value: "TRUEWALLET",
-          code: "TRUEWALLET",
-          text: "ทรูวอลเล็ต"
-        },
-        {
-          value: "TMB",
-          code: "TMB",
-          text: "ธนาคารทหารไทย"
-        },
-        {
-          value: "BBL",
-          code: "BBL",
-          text: "ธนาคารกรุงเทพ"
-        },
-        {
-          value: "KTB",
-          code: "KTB",
-          text: "ธนาคารกรุงไทย"
-        },
-        {
-          value: "BAY",
-          code: "BAY",
-          text: "ธนาคารกรุงศรีอยุธยา"
-        },
-        {
-          value: "KKP",
-          code: "KKP",
-          text: "ธนาคารเกียรตินาคินภัทร"
-        },
-        {
-          value: "CIMB",
-          code: "CIMB",
-          text: "ธนาคารซีไอเอ็มบีไทย"
-        },
-        {
-          value: "TISCO",
-          code: "TISCO",
-          text: "ธนาคารทิสโก้"
-        },
-        {
-          value: "TBANK",
-          code: "TBANK",
-          text: "ธนาคารธนชาต"
-        },
-        {
-          value: "UOBT",
-          code: "UOBT",
-          text: "ธนาคารยูโอบี"
-        },
-        {
-          value: "TCD",
-          code: "TCD",
-          text: "ธนาคารไทยเครดิตเพื่อรายย่อย"
-        },
-        {
-          value: "LHFG",
-          code: "LHFG",
-          text: "ธนาคารแลนด์แอนด์ เฮ้าส์"
-        },
-        {
-          value: "BAAC",
-          code: "BAAC",
-          text: "ธนาคารเพื่อการเกษตรและสหกรณ์การเกษตร"
-        },
-        {
-          value: "GSB",
-          code: "GSB",
-          text: "ธนาคารออมสิน"
-        },
-        {
-          value: "GHB",
-          code: "GHB",
-          text: "ธนาคารอาคารสงเคราะห์"
-        },
-        {
-          value: "ISBT",
-          code: "ISBT",
-          text: "ธนาคารอิสลามแห่งประเทศไทย"
-        },
-        {
-          value: "SCB",
-          code: "SCB",
-          text: "ธนาคารไทยพานิชย์"
-        }
-      ]
+      key: localStorage.getItem("key") || "",
+      user: localStorage.getItem("username") || null
     },
-    modules: { auth, promotion, member, setting },
+    actions: {
+      async getRecords({}, params) {
+        return new Promise(async (resolve, reject) => {
+          try {
+            let response = await this.$axios.get(
+              `${process.env.ALL_FINANCIAL_API}/accounting/api/Record`,
+              { params }
+            );
+            resolve(response);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      },
+      async getRecordsByDept({}, params) {
+        return new Promise(async (resolve, reject) => {
+          try {
+            let response = await this.$axios.get(
+              `${process.env.ALL_FINANCIAL_API}/accounting/api/Record/Dept`,
+              { params }
+            );
+            resolve(response);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      },
+      async getCompanylist() {
+        return new Promise(async (resolve, reject) => {
+          try {
+            let response = await this.$axios.get(
+              `${process.env.ALL_FINANCIAL_API}/accounting/api/Company`
+            );
+            resolve(response);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      },
 
-    strict: process.env.DEV
+      async getReportMonthly({}, param) {
+        return new Promise(async (resolve, reject) => {
+          try {
+            let response = await this.$axios.get(
+              `${process.env.ALL_FINANCIAL_API}/accounting/api/Record/Monthly/${param.month}/${param.year}`
+            );
+            resolve(response);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      },
+      async actionLogin(context, { username, password }) {
+        return new Promise(async (resolve, reject) => {
+          try {
+            let response = await this.$axios.post(
+              `${process.env.ALL_FINANCIAL_API}/api/Auth/accounting/Login`,
+              {
+                username,
+                password
+              }
+            );
+            context.commit("set_login", response.data);
+            resolve(response);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      },
+      async createRecords(context, body) {
+        return new Promise(async (resolve, reject) => {
+          try {
+            let response = await this.$axios.post(
+              `${process.env.ALL_FINANCIAL_API}/accounting/api/Record`,
+              body
+            );
+
+            resolve(response);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      },
+      async updateRecords(context, body) {
+        console.log(body, "body");
+        return new Promise(async (resolve, reject) => {
+          try {
+            let response = await this.$axios.put(
+              `${process.env.ALL_FINANCIAL_API}/accounting/api/Record/${body.id}`,
+              body
+            );
+
+            resolve(response);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      },
+      async getUser(context) {
+        return new Promise(async (resolve, reject) => {
+          try {
+            let response = await this.$axios.get(
+              `${process.env.ALL_FINANCIAL_API}/accounting/api/user`
+            );
+            resolve(response);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      },
+      async createUser(context, body) {
+        return new Promise(async (resolve, reject) => {
+          try {
+            let response = await this.$axios.post(
+              `${process.env.ALL_FINANCIAL_API}/api/Auth/accounting/register`,
+              { ...body, status: true }
+            );
+            resolve(response);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      },
+      async updateUser(context, body) {
+        return new Promise(async (resolve, reject) => {
+          try {
+            let response = await this.$axios.put(
+              `${process.env.ALL_FINANCIAL_API}/accounting/api/user/${body.id}`,
+              { ...body }
+            );
+            resolve(response);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      },
+      async getCompanylist(context) {
+        return new Promise(async (resolve, reject) => {
+          try {
+            let response = await this.$axios.get(
+              `${process.env.ALL_FINANCIAL_API}/accounting/api/Record/Company`
+            );
+            resolve(response);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      }
+    },
+    mutations: {
+      set_login(state, payload) {
+        const { token, username } = payload;
+        state.key = token;
+        state.user = username;
+        localStorage.setItem("key", token);
+        localStorage.setItem("username", username);
+      }
+    }
   });
-
   return Store;
 }
