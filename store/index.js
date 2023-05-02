@@ -1,3 +1,4 @@
+import { redirect } from "@nuxtjs/auth/lib/module/defaults";
 import Vue from "vue";
 import Vuex from "vuex";
 Vue.use(Vuex);
@@ -5,7 +6,9 @@ export default function(/* { ssrContext } */) {
   const Store = new Vuex.Store({
     state: {
       key: localStorage.getItem("key") || "",
-      user: localStorage.getItem("username") || null
+      user: null,
+      status: false,
+      role: null
     },
     actions: {
       async getRecords({}, params) {
@@ -69,8 +72,9 @@ export default function(/* { ssrContext } */) {
                 password
               }
             );
-            context.commit("set_login", response.data);
+            await context.commit("set_login", response.data);
             resolve(response);
+            await context.dispatch("getProfile");
           } catch (error) {
             reject(error);
           }
@@ -117,6 +121,19 @@ export default function(/* { ssrContext } */) {
           }
         });
       },
+      async getProfile(context) {
+        return new Promise(async (resolve, reject) => {
+          try {
+            let response = await this.$axios.get(
+              `${process.env.ALL_FINANCIAL_API}/accounting/api/profile`
+            );
+
+            context.commit("set_profile", response.data);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      },
       async createUser(context, body) {
         return new Promise(async (resolve, reject) => {
           try {
@@ -154,15 +171,52 @@ export default function(/* { ssrContext } */) {
             reject(error);
           }
         });
+      },
+      async getTransactionDeptloss(context, id) {
+        return new Promise(async (resolve, reject) => {
+          try {
+            let response = await this.$axios.get(
+              `${process.env.ALL_FINANCIAL_API}/accounting/api/transaction/dept/${id}`
+            );
+            resolve(response);
+          } catch (error) {
+            reject(error);
+          }
+        });
+      },
+      async removeRecorsds(context, id) {
+        return new Promise(async (resolve, reject) => {
+          try {
+            let response = await this.$axios.delete(
+              `${process.env.ALL_FINANCIAL_API}/accounting/api/Record/${id}`
+            );
+            resolve(response);
+          } catch (error) {
+            reject(error);
+          }
+        });
       }
     },
     mutations: {
       set_login(state, payload) {
-        const { token, username } = payload;
+        const { token } = payload;
         state.key = token;
-        state.user = username;
         localStorage.setItem("key", token);
-        localStorage.setItem("username", username);
+      },
+      set_profile(state, payload) {
+        state.user = payload.username;
+        state.role = payload.role;
+        state.status = payload.status;
+        if (!payload.status) {
+          this.$router.push("/login");
+        }
+      },
+      set_logout(state) {
+        state.key = null;
+        state.user = null;
+        state.role = null;
+        state.status = false;
+        localStorage.clear();
       }
     }
   });

@@ -8,7 +8,9 @@
 
       <v-speed-dial direction="bottom" transition="slide-y-transition">
         <template v-slot:activator>
-          <v-chip btn> <v-icon left> mdi-account-circle </v-icon>admin </v-chip>
+          <v-chip btn>
+            <v-icon left> mdi-account-circle </v-icon>{{ $store.state.user }}
+          </v-chip>
         </template>
 
         <v-tooltip left color="red">
@@ -33,14 +35,22 @@
       v-model="drawer"
       :clipped="clipped"
       app
+     
+      :mini-variant="drawer"
       fixed
+      permanent
       width="280"
     >
       <v-toolbar-title class="font-weight-bold text-center pa-3" align-center>
         <h1>Financial System</h1>
       </v-toolbar-title>
       <v-list nav dense>
-        <div v-for="(link, i) in items" :key="i">
+        <div
+          v-for="(link, i) in $store.state.role === 'superadmin'
+            ? items
+            : items.filter(x => x.to !== '/user')"
+          :key="i"
+        >
           <v-list-item
             v-if="!link.subLinks"
             :to="link.to"
@@ -102,6 +112,7 @@
 </template>
 
 <script>
+import th from "dayjs/locale/th";
 import { mapActions, mapMutations, mapState } from "vuex";
 
 export default {
@@ -130,25 +141,25 @@ export default {
       items: [
         {
           title: "รายรับ-รายจ่าย",
-          icon: "mdi-history",
+          icon: "mdi-finance",
           to: "/",
           status: true
         },
         {
           title: "รายงานยอดเสีย",
-          icon: "mdi-history",
+          icon: "mdi-note-multiple-outline",
           to: "/dept",
           status: true
         },
         {
           title: "รายงานรายเดือน",
-          icon: "mdi-toggle-switch",
+          icon: "mdi-chart-arc",
           to: "/monthlyReport",
           status: true
         },
         {
           title: "พนักงาน",
-          icon: "mdi-tune",
+          icon: "mdi-account-multiple",
           to: "/user",
           status: true
         }
@@ -157,12 +168,16 @@ export default {
   },
 
   mounted() {},
-  async fetch() {},
+  async fetch() {
+    await this.$store.dispatch("getProfile");
+  },
 
   async beforeMount() {},
   computed: {},
   methods: {
+    ...mapMutations(["set_logout"]),
     logout() {
+      this.set_logout();
       this.$router.push("/login");
     }
   }

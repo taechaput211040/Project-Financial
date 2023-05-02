@@ -119,38 +119,7 @@
               v-model="filter.inputfilter"
               label="สถานะ"
             ></v-select>
-            <v-menu
-              v-else-if="filter.options == 'due_date'"
-              ref="menu3"
-              v-model="menu3"
-              :close-on-content-click="false"
-              :return-value.sync="filter.inputfilter"
-              transition="scale-transition"
-              offset-y
-              min-width="auto"
-            >
-              <template v-slot:activator="{ on, attrs }">
-                <v-text-field
-                  v-model="filter.inputfilter"
-                  label="เลือกวันครบกำหนดชำระ"
-                  dense
-                  outlined
-                  prepend-icon="mdi-calendar"
-                  readonly
-                  v-bind="attrs"
-                  v-on="on"
-                  hide-details="auto"
-                ></v-text-field>
-              </template>
-              <v-date-picker
-                v-model.trim="filter.inputfilter"
-                no-title
-                scrollable
-                locale="th"
-                @input="$refs.menu3.save(filter.inputfilter)"
-              >
-              </v-date-picker>
-            </v-menu>
+
             <v-select
               v-if="filter.options == 'company'"
               outlined

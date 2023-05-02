@@ -7,7 +7,12 @@
 </template>
 
 <script>
-export default {};
+export default {
+  fetch() {
+    this.$store.commit("set_logout");
+    localStorage.clear();
+  }
+};
 </script>
 
 <style></style>

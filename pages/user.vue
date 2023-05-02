@@ -161,6 +161,9 @@ export default {
     };
   },
   async fetch() {
+    if (this.$store.state.role !== "superadmin") {
+      this.$router.push("/");
+    }
     try {
       let { data } = await this.$store.dispatch("getUser");
       this.items = data;

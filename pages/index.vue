@@ -40,7 +40,10 @@
               small
               rounded
               @click="handleOpendetail(item)"
-              >ดูและเเก้ไขรายละเอียด</v-btn
+              >ดูและเเก้ไข</v-btn
+            >
+            <v-btn rounded dark small color="error" v-if="$store.state.role=='superadmin'" @click="deleteRecord(item)"
+              ><v-icon left>mdi-trash-can</v-icon>ลบ</v-btn
             >
           </template>
           <template #[`item.created_at`]="{ item }">
@@ -51,10 +54,10 @@
           </template>
           <template #[`item.status`]="{ item }">
             <v-chip small outlined v-if="item.status" color="success"
-              ><v-icon left>mdi-circle</v-icon> สำเร็จ</v-chip
+              ><v-icon left>mdi-circle</v-icon> ชำระเสร็จสิ้นแล้ว</v-chip
             >
             <v-chip small outlined v-else text color="error"
-              ><v-icon left>mdi-circle</v-icon>ไม่สำเร็จ</v-chip
+              ><v-icon left>mdi-circle</v-icon>ยังชำระไม่เสร็จสิ้น</v-chip
             >
           </template>
         </v-data-table>
@@ -87,10 +90,10 @@
                   </h4>
                   <div class="row">
                     <div class="col-12">
+                      เลือกรายการ รายรับ/รายจ่าย
                       <v-select
                         :items="itemincome_expense"
                         v-model="itemrecord.income_expense"
-                        label="รายรับ/รายจ่าย"
                         hide-details="auto"
                         :disabled="isEdit"
                         dense
@@ -98,25 +101,34 @@
                       ></v-select>
                     </div>
                     <div class="col-12">
+                      ชื่อรายการ
                       <v-text-field
                         v-model="itemrecord.record"
                         hide-details="auto"
                         dense
                         outlined
+                        :disabled="
+                          isLoseDept ||
+                            ($store.state.role === 'staff' && isEdit)
+                        "
                         :rules="[v => !!v || 'กรุณากรอกชื่อรายการ']"
-                        label="รายการ"
                       ></v-text-field>
                     </div>
                     <div class="col-12">
+                      รายละเอียดรายการ
                       <v-textarea
                         v-model="itemrecord.record_detail"
                         outlined
+                        :disabled="
+                          isLoseDept ||
+                            ($store.state.role === 'staff' && isEdit)
+                        "
                         hide-details="auto"
-                        label="รายละเอียดรายการ"
                         :rules="[v => !!v || 'กรุณากรอกรายละเอียดรายการ']"
                       ></v-textarea>
                     </div>
                     <div class="col-12 col-sm-6">
+                      จำนวนเงิน
                       <v-text-field
                         :value="sumamount() | numberFormat"
                         hide-details="auto"
@@ -124,18 +136,27 @@
                         filled
                         dense
                         outlined
-                        label="จำนวน"
                       ></v-text-field>
                     </div>
-                    <div class="col-12 col-sm-6">
+                    <div
+                      class="col-12 col-sm-6"
+                      v-if="!itemrecord.income_expense"
+                    >
+                      ชำระแล้ว
                       <v-text-field
-                        v-if="!itemrecord.income_expense"
                         hide-details="auto"
                         dense
                         outlined
-                        :disabled="isLoseDept"
+                        :rules="[
+                          v =>
+                            v <= itemrecord.amount ||
+                            `กรุณากรอกข้อมูลให้ถูกต้อง(ยอดชำระต้องไม่เกิน ${itemrecord.amount} บาท)`
+                        ]"
+                        :disabled="
+                          isLoseDept ||
+                            ($store.state.role === 'staff' && isEdit)
+                        "
                         v-model.number="itemrecord.actual_amount"
-                        label="ชำระแล้ว"
                       ></v-text-field>
                     </div>
                     <div class="col-12 ">
@@ -152,8 +173,13 @@
                             v-model="itemrecord.company"
                             dense
                             item-value="company"
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
                             hide-details="auto"
                             label="เลือกรายชื่อบริษัทที่มีอยู่"
+                            :rules="[v => !!v || 'กรุณาเลือกชื่อบริษัท']"
                             item-text="company"
                             :items="companyList"
                           ></v-select></v-tab-item
@@ -161,6 +187,10 @@
                           ><v-text-field
                             hide-details="auto"
                             dense
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
                             v-model="itemrecord.company"
                             outlined
                             label="เพิ่มชื่อบริษัทใหม่"
@@ -186,13 +216,19 @@
                             readonly
                             v-bind="attrs"
                             v-on="on"
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
                             dense
                             outlined
+                            :rules="[v => !!v || `กรุณาเลือกวัน`]"
                           ></v-text-field>
                         </template>
                         <v-date-picker
                           :rules="[v => !!v || 'กรุณาเลือกวันกำหนดชำระ']"
                           v-model.trim="itemrecord.due_date"
+                          :min="nowDate"
                           @input="menu = false"
                         ></v-date-picker>
                       </v-menu>
@@ -200,220 +236,286 @@
                   </div>
                 </div>
                 <div class="col-12 col-sm-6 col-md-4 elevation-2">
-                  <h4 class="text-center my-2">
-                    รายละเอียดค่ารายการ
-                  </h4>
-                  <div class="row">
-                    <div class="col-12 col-sm-6  py-1">
-                      ค่าบริการรายเดือน
-                      <v-text-field
-                        hide-details="auto"
-                        dense
-                        v-model.number="itemrecord.monthly_fee"
-                        :disabled="isLoseDept"
-                        outlined
-                        type="number"
-                        label=""
-                      ></v-text-field>
-                    </div>
-                    <div class="col-12 col-sm-6  py-1">
-                      ค่าฟีเจอร์
-                      <v-text-field
-                        hide-details="auto"
-                        type="number"
-                        dense
-                        v-model.number="itemrecord.feature"
-                        outlined
-                        :disabled="isLoseDept"
-                        label=""
-                      ></v-text-field>
-                    </div>
-                    <div class="col-12 col-sm-6  py-1">
-                      ค่าwinlose
-                      <v-text-field
-                        hide-details="auto"
-                        dense
-                        v-model.number="itemrecord.winlose"
-                        type="number"
-                        outlined
-                        :disabled="isLoseDept"
-                        label=""
-                      ></v-text-field>
-                    </div>
-                    <div class="col-12 col-sm-6  py-1">
-                      ค่าจดโดเมน
-                      <v-text-field
-                        hide-details="auto"
-                        type="number"
-                        dense
-                        :disabled="isLoseDept"
-                        v-model.number="itemrecord.regis_domain"
-                        outlined
-                        label=""
-                      ></v-text-field>
-                    </div>
-                    <div class="col-12 col-sm-6  py-1">
-                      ค่าเครดิต
-                      <v-text-field
-                        hide-details="auto"
-                        type="number"
-                        dense
-                        :disabled="isLoseDept"
-                        v-model.number="itemrecord.credit_purchase"
-                        outlined
-                        label=""
-                      ></v-text-field>
-                    </div>
-                    <div class="col-12 col-sm-6  py-1">
-                      ค่าแรกเข้าระบบออโต้
-                      <v-text-field
-                        type="number"
-                        :disabled="isLoseDept"
-                        hide-details="auto"
-                        dense
-                        v-model.number="itemrecord.setup_auto"
-                        outlined
-                        label=""
-                      ></v-text-field>
-                    </div>
-                    <div class="col-12  col-sm-6 py-1">
-                      ค่าทำของ
-                      <v-text-field
-                        hide-details="auto"
-                        type="number"
-                        :disabled="isLoseDept"
-                        dense
-                        v-model.number="itemrecord.wage"
-                        outlined
-                        label=""
-                      ></v-text-field>
-                    </div>
-                    <div class="col-12  col-sm-6 py-1">
-                      ค่าลิขสิทธิ์
-                      <v-text-field
-                        type="number"
-                        :disabled="isLoseDept"
-                        hide-details="auto"
-                        dense
-                        v-model.number="itemrecord.copyright"
-                        outlined
-                        label=""
-                      ></v-text-field>
-                    </div>
-                    <div class="col-12  col-sm-6 py-1">
-                      ค่าเช่า
-                      <v-text-field
-                        type="number"
-                        :disabled="isLoseDept"
-                        hide-details="auto"
-                        dense
-                        v-model.number="itemrecord.rental"
-                        outlined
-                        label=""
-                      ></v-text-field>
-                    </div>
-                    <div class="col-12  col-sm-6 py-1">
-                      ค่าน้ำค่าไฟ ค่าจอดรถ
-                      <v-text-field
-                        hide-details="auto"
-                        dense
-                        :disabled="isLoseDept"
-                        v-model.number="itemrecord.facility"
-                        type="number"
-                        outlined
-                        label=""
-                      ></v-text-field>
-                    </div>
-                    <div class="col-12  col-sm-6 py-1">
-                      ค่าคลาวน์
-                      <v-text-field
-                        hide-details="auto"
-                        dense
-                        :disabled="isLoseDept"
-                        v-model.number="itemrecord.cloud"
-                        type="number"
-                        outlined
-                        label=""
-                      ></v-text-field>
-                    </div>
-                    <div class="col-12  col-sm-6 py-1">
-                      ค่าแรง
-                      <v-text-field
-                        hide-details="auto"
-                        dense
-                        :disabled="isLoseDept"
-                        v-model.number="itemrecord.salary"
-                        type="number"
-                        outlined
-                        label=""
-                      ></v-text-field>
-                    </div>
-                    <div class="col-12  col-sm-6 py-1">
-                      ค่าคอม
-                      <v-text-field
-                        hide-details="auto"
-                        dense
-                        :disabled="isLoseDept"
-                        v-model.number="itemrecord.commission"
-                        outlined
-                        type="number"
-                        label=""
-                      ></v-text-field>
-                    </div>
-                    <div class="col-12  col-sm-6 py-1">
-                      outsource
-                      <v-text-field
-                        hide-details="auto"
-                        dense
-                        :disabled="isLoseDept"
-                        v-model.number="itemrecord.outsource"
-                        outlined
-                        type="number"
-                        label=""
-                      ></v-text-field>
-                    </div>
-                    <div class="col-12  col-sm-6 py-1">
-                      incentive
-                      <v-text-field
-                        hide-details="auto"
-                        dense
-                        :disabled="isLoseDept"
-                        v-model.number="itemrecord.incentive"
-                        type="number"
-                        outlined
-                        label=""
-                      ></v-text-field>
-                    </div>
-                    <div class="col-12  col-sm-6 py-1">
-                      ภาษี
-                      <v-text-field
-                        hide-details="auto"
-                        dense
-                        :disabled="isLoseDept"
-                        v-model.number="itemrecord.tax"
-                        outlined
-                        type="number"
-                        label=""
-                      ></v-text-field>
-                    </div>
-                    <div class="col-12  col-sm-6 py-1">
-                      ประกันสังคม
-                      <v-text-field
-                        hide-details="auto"
-                        dense
-                        type="number"
-                        :disabled="isLoseDept"
-                        v-model.number="itemrecord.social_tax"
-                        outlined
-                        label=""
-                      ></v-text-field>
-                    </div>
+                  <div>
+                    <v-card class="elevation-2 pa-2 ma-1">
+                      <v-card-title primary-title>
+                        <h4>รายละเอียดรายรับ</h4>
+                      </v-card-title>
+                      <div class="row py-2">
+                        <div class="col-12 col-sm-6  py-1">
+                          ค่าบริการรายเดือน
+                          <v-text-field
+                            hide-details="auto"
+                            dense
+                            v-model.number="itemrecord.monthly_fee"
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
+                            outlined
+                            type="number"
+                            label=""
+                          ></v-text-field>
+                        </div>
+                        <div class="col-12 col-sm-6  py-1">
+                          ค่าฟีเจอร์
+                          <v-text-field
+                            hide-details="auto"
+                            type="number"
+                            dense
+                            v-model.number="itemrecord.feature"
+                            outlined
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
+                            label=""
+                          ></v-text-field>
+                        </div>
+                        <div class="col-12 col-sm-6  py-1">
+                          ค่าwinlose
+                          <v-text-field
+                            hide-details="auto"
+                            dense
+                            v-model.number="itemrecord.winlose"
+                            type="number"
+                            outlined
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
+                            label=""
+                          ></v-text-field>
+                        </div>
+                        <div class="col-12 col-sm-6  py-1">
+                          ค่าจดโดเมน
+                          <v-text-field
+                            hide-details="auto"
+                            type="number"
+                            dense
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
+                            v-model.number="itemrecord.regis_domain"
+                            outlined
+                            label=""
+                          ></v-text-field>
+                        </div>
+                        <div class="col-12 col-sm-6  py-1">
+                          ค่าเครดิต
+                          <v-text-field
+                            hide-details="auto"
+                            type="number"
+                            dense
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
+                            v-model.number="itemrecord.credit_purchase"
+                            outlined
+                            label=""
+                          ></v-text-field>
+                        </div>
+                        <div class="col-12 col-sm-6  py-1">
+                          ค่าแรกเข้าระบบออโต้
+                          <v-text-field
+                            type="number"
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
+                            hide-details="auto"
+                            dense
+                            v-model.number="itemrecord.setup_auto"
+                            outlined
+                            label=""
+                          ></v-text-field>
+                        </div>
+                        <div class="col-12  col-sm-6 py-1">
+                          ค่าทำของ
+                          <v-text-field
+                            hide-details="auto"
+                            type="number"
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
+                            dense
+                            v-model.number="itemrecord.wage"
+                            outlined
+                            label=""
+                          ></v-text-field>
+                        </div>
+                      </div>
+                    </v-card>
+                    <v-card class="elevation-2 pa-2 ma-1 mt-3">
+                      <v-card-title primary-title>
+                        <h4 class="text-center">รายละเอียดรายจ่าย</h4>
+                      </v-card-title>
+                      <div class="row  py-2">
+                        <div class="col-12  col-sm-6 py-1">
+                          ค่าลิขสิทธิ์
+                          <v-text-field
+                            type="number"
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
+                            hide-details="auto"
+                            dense
+                            v-model.number="itemrecord.copyright"
+                            outlined
+                            label=""
+                          ></v-text-field>
+                        </div>
+                        <div class="col-12  col-sm-6 py-1">
+                          ค่าเช่า
+                          <v-text-field
+                            type="number"
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
+                            hide-details="auto"
+                            dense
+                            v-model.number="itemrecord.rental"
+                            outlined
+                            label=""
+                          ></v-text-field>
+                        </div>
+                        <div class="col-12  col-sm-6 py-1">
+                          ค่าน้ำค่าไฟ ค่าจอดรถ
+                          <v-text-field
+                            hide-details="auto"
+                            dense
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
+                            v-model.number="itemrecord.facility"
+                            type="number"
+                            outlined
+                            label=""
+                          ></v-text-field>
+                        </div>
+                        <div class="col-12  col-sm-6 py-1">
+                          ค่าคลาวน์
+                          <v-text-field
+                            hide-details="auto"
+                            dense
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
+                            v-model.number="itemrecord.cloud"
+                            type="number"
+                            outlined
+                            label=""
+                          ></v-text-field>
+                        </div>
+                        <div class="col-12  col-sm-6 py-1">
+                          ค่าแรง
+                          <v-text-field
+                            hide-details="auto"
+                            dense
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
+                            v-model.number="itemrecord.salary"
+                            type="number"
+                            outlined
+                            label=""
+                          ></v-text-field>
+                        </div>
+                        <div class="col-12  col-sm-6 py-1">
+                          ค่าคอม
+                          <v-text-field
+                            hide-details="auto"
+                            dense
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
+                            v-model.number="itemrecord.commission"
+                            outlined
+                            type="number"
+                            label=""
+                          ></v-text-field>
+                        </div>
+                        <div class="col-12  col-sm-6 py-1">
+                          outsource
+                          <v-text-field
+                            hide-details="auto"
+                            dense
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
+                            v-model.number="itemrecord.outsource"
+                            outlined
+                            type="number"
+                            label=""
+                          ></v-text-field>
+                        </div>
+                        <div class="col-12  col-sm-6 py-1">
+                          incentive
+                          <v-text-field
+                            hide-details="auto"
+                            dense
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
+                            v-model.number="itemrecord.incentive"
+                            type="number"
+                            outlined
+                            label=""
+                          ></v-text-field>
+                        </div>
+                        <div class="col-12  col-sm-6 py-1">
+                          ภาษี
+                          <v-text-field
+                            hide-details="auto"
+                            dense
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
+                            v-model.number="itemrecord.tax"
+                            outlined
+                            type="number"
+                            label=""
+                          ></v-text-field>
+                        </div>
+                        <div class="col-12  col-sm-6 py-1">
+                          ประกันสังคม
+                          <v-text-field
+                            hide-details="auto"
+                            dense
+                            type="number"
+                            :disabled="
+                              isLoseDept ||
+                                ($store.state.role === 'staff' && isEdit)
+                            "
+                            v-model.number="itemrecord.social_tax"
+                            outlined
+                            label=""
+                          ></v-text-field>
+                        </div>
+                      </div>
+                    </v-card>
+
                     <div class="col-12  col-sm-6 py-1">
                       อื่นๆ
                       <v-text-field
                         hide-details="auto"
                         type="number"
-                        :disabled="isLoseDept"
+                        :disabled="
+                          isLoseDept ||
+                            ($store.state.role === 'staff' && isEdit)
+                        "
                         dense
                         v-model.number="itemrecord.others"
                         outlined
@@ -424,6 +526,7 @@
                       class="col-12"
                       v-if="!itemrecord.income_expense && isEdit"
                     >
+                      ชำระยอดหนี้เสีย
                       <div class="d-flex align-center">
                         <v-checkbox
                           hide-details
@@ -439,14 +542,27 @@
                         >
                       </div>
                       <v-text-field
-                        v-if="itemrecord.loss_dept"
+                        v-if="itemrecord.loss_dept && currentLossdept != 0"
                         hide-details="auto"
                         v-model.number="amountLossdepttopay"
                         type="number"
                         outlined
+                        :disabled="currentLossdept == 0"
+                        :rules="[
+                          v =>
+                            v <= currentLossdept ||
+                            `กรุณากรอกข้อมูลให้ถูกต้อง(ยอดหนี้เสียที่ชำระสูงสุด ${currentLossdept
+                              | numberFormat} บาท)`
+                        ]"
                         dense
                         label="ชำระยอดหนี้เสีย"
                       ></v-text-field>
+                      <div
+                        v-if="currentLossdept == 0"
+                        class="font-weight-bold success--text"
+                      >
+                        ชำระยอดหนี้เสียครบเเล้ว
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -459,6 +575,9 @@
                     label="File input"
                     outlined
                     dense
+                    :disabled="
+                      isLoseDept || ($store.state.role === 'staff' && isEdit)
+                    "
                     hide-details="auto"
                     accept="image/png, image/jpeg, image/jpg , image/webp"
                     @change="inputImage"
@@ -470,7 +589,11 @@
                     </h3>
                   </v-alert>
                   <div class="text-center mt-2">
-                    <v-btn small class="primary" @click="handleUploadImage"
+                    <v-btn
+                      small
+                      class="primary"
+                      :disabled="$store.state.role === 'staff' && isEdit"
+                      @click="handleUploadImage"
                       >upload ภาพ</v-btn
                     >
                   </div>
@@ -482,7 +605,14 @@
               </div>
 
               <v-card-actions class="justify-center">
-                <v-btn color="primary" @click="handlecreateRecords"
+                <v-btn
+                  color="primary"
+                  @click="handlecreateRecords"
+                  :disabled="
+                    itemrecord.status &&
+                      !itemrecord.income_expense &&
+                      itemrecord.loss_dept
+                  "
                   >บันทึกรายการ</v-btn
                 >
                 <v-btn color="error" @click="handleCloseDialog">ปิด</v-btn>
@@ -504,6 +634,8 @@ export default {
   components: { SearchFilterReport, LoadingPage },
   data() {
     return {
+      nowDate: new Date().toISOString().slice(0, 10),
+
       tab: null,
       toggle_exclusive: 0,
       companyList: [],
@@ -551,6 +683,7 @@ export default {
       isDetail: false,
       dlStatus: false,
       items: [],
+
       headers: [
         {
           text: "รายการ",
@@ -630,6 +763,13 @@ export default {
           align: "center",
           sortable: false,
           class: "font-weight-bold"
+        },
+        {
+          text: "ผู้ดำเนินการ",
+          value: "operator",
+          align: "center",
+          sortable: false,
+          class: "font-weight-bold"
         }
       ],
       dateFilter: {
@@ -668,6 +808,35 @@ export default {
     }
   },
   methods: {
+    async deleteRecord(item) {
+      try {
+        this.$swal({
+          title: `ต้องการลบรายการหรือไม่ ?`,
+          icon: "warning",
+          showCancelButton: true,
+          allowOutsideClick: false,
+          confirmButtonColor: "#3085d6",
+          cancelButtonColor: "#d33",
+          confirmButtonText: `ลบ`,
+          cancelButtonText: "ยกเลิก"
+        }).then(async result => {
+          if (result.isConfirmed) {
+            await this.$store.dispatch("removeRecorsds", item.id);
+            this.$swal({
+              icon: "success",
+              title: `ลบรายการเเล้ว`,
+              allowOutsideClick: false,
+              showConfirmButton: false,
+              timer: 1500
+            }).then(async result => {
+              if (result) {
+                await this.$fetch();
+              }
+            });
+          }
+        });
+      } catch (error) {}
+    },
     async getCompany() {
       let { data } = await this.$store.dispatch("getCompanylist");
       this.companyList = data;
@@ -761,6 +930,7 @@ export default {
     },
     async handlecreateRecords() {
       if (this.$refs.formCreate.validate()) {
+        this.itemrecord.operator = this.$store.state.user;
         this.$swal({
           title: `ต้องการ${this.isEdit ? "แก้ไข" : "สร้าง"}รายการหรือไม่ ?`,
           icon: "question",

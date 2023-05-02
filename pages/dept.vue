@@ -34,10 +34,18 @@
             <v-btn
               color="black"
               dark
-             small
+              small
               rounded
               @click="handleOpendetail(item)"
               >รายละเอียด</v-btn
+            >
+            <v-btn
+              color="black"
+              dark
+              small
+              rounded
+              @click="handleOpenHistory(item)"
+              >ประวัติการชำระ</v-btn
             >
           </template>
           <template #[`item.created_at`]="{ item }">
@@ -55,7 +63,38 @@
             >
           </template>
         </v-data-table>
-
+        <v-dialog v-model="dlTransaction">
+          <v-card>
+            <v-card-title class="justify-center font-weight-bold" primary-title>
+              <h3>ประวัติการชำระยอดหนี้เสีย</h3>
+            </v-card-title>
+            <!-- {{ transactionList }} -->
+            <v-data-table
+              :headers="headersTransaction"
+              :items="transactionList"
+              disable-pagination
+              hide-default-footer
+            >
+              <template #[`item.no`]="{ index }">
+                {{ index + 1 }}
+              </template>
+              <template #[`item.created_at`]="{ item }">
+                {{ item.created_at | dateFormat }}
+              </template>
+              <template #[`item.status`]="{ item }">
+                <v-chip small outlined v-if="item.status" color="success"
+                  ><v-icon left>mdi-circle</v-icon>ชำระครบยอดแล้ว</v-chip
+                >
+                <v-chip small outlined v-else text color="error"
+                  ><v-icon left>mdi-circle</v-icon>ชำระยังไม่ครบ</v-chip
+                >
+              </template>
+            </v-data-table>
+            <v-card-actions class="justify-center">
+              <v-btn color="error" @click="dlTransaction = false">ปิด</v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
         <v-dialog v-model="isDetail">
           <v-card class="pa-3"
             ><v-form ref="formCreate">
@@ -400,10 +439,79 @@
 import dayjs from "dayjs";
 import SearchFilterReport from "../components/SearchFilterReport.vue";
 import LoadingPage from "../components/LoadingPage.vue";
+import th from "dayjs/locale/th";
 export default {
   components: { SearchFilterReport, LoadingPage },
   data() {
     return {
+      headersTransaction: [
+        {
+          text: "ลำดับ",
+          value: "no",
+          align: "center",
+          sortable: false,
+          class: "font-weight-bold",
+          cellClass: "font-weight-bold"
+        },
+        {
+          text: "รายการ",
+          value: "record_name",
+          align: "center",
+          sortable: false,
+          class: "font-weight-bold",
+          cellClass: "font-weight-bold"
+        },
+        {
+          text: "เวลาบันทึกยอด",
+          value: "created_at",
+          align: "center",
+          sortable: false,
+          class: "font-weight-bold",
+          cellClass: "font-weight-bold"
+        },
+        {
+          text: "บันทึกยอดโดย",
+          value: "operator",
+          align: "center",
+          sortable: false,
+          class: "font-weight-bold",
+          cellClass: "font-weight-bold"
+        },
+        {
+          text: "จำนวนยอดหนี้เสียที่จ่าย",
+          value: "dept_payout",
+          align: "center",
+          sortable: false,
+          class: "font-weight-bold",
+          cellClass: "success--text font-weight-bold"
+        },
+        {
+          text: "ยอดหนี้เสียคงเหลือ",
+          value: "dept_balance",
+          align: "center",
+          sortable: false,
+          class: "font-weight-bold",
+          cellClass: "primary--text font-weight-bold"
+        },
+        {
+          text: "หมายเหตุ",
+          value: "remark",
+          align: "center",
+          sortable: false,
+          class: "font-weight-bold",
+          cellClass: "font-weight-bold"
+        },
+        {
+          text: "สถานะ",
+          value: "status",
+          align: "center",
+          sortable: false,
+          class: "font-weight-bold",
+          cellClass: "font-weight-bold"
+        }
+      ],
+      dlTransaction: false,
+      transactionList: [],
       isLoading: false,
       menu: false,
       imageUpload: {},
@@ -430,21 +538,24 @@ export default {
           value: "no",
           align: "center",
           sortable: false,
-          class: "font-weight-bold"
+          class: "font-weight-bold",
+          cellClass: "font-weight-bold"
         },
         {
           text: "รายรับ/รายจ่าย",
           value: "income_expense",
           align: "center",
           sortable: false,
-          class: "font-weight-bold"
+          class: "font-weight-bold",
+          cellClass: "font-weight-bold"
         },
         {
           text: "รายการ",
           value: "record",
           align: "center",
           sortable: false,
-          class: "font-weight-bold"
+          class: "font-weight-bold",
+          cellClass: "font-weight-bold"
         },
 
         {
@@ -452,21 +563,24 @@ export default {
           value: "amount",
           align: "center",
           sortable: false,
-          class: "font-weight-bold"
+          class: "font-weight-bold",
+          cellClass: "font-weight-bold"
         },
         {
           text: "ชำระแล้ว",
           value: "actual_amount",
           align: "center",
           sortable: false,
-          class: "font-weight-bold"
+          class: "font-weight-bold",
+          cellClass: "font-weight-bold"
         },
         {
-          text: "Action",
+          text: "การดำเนินการ",
           value: "detail_record",
           align: "center",
           sortable: false,
-          class: "font-weight-bold"
+          class: "font-weight-bold",
+          cellClass: "font-weight-bold"
         },
 
         {
@@ -474,28 +588,32 @@ export default {
           value: "created_at",
           align: "center",
           sortable: false,
-          class: "font-weight-bold"
+          class: "font-weight-bold",
+          cellClass: "font-weight-bold"
         },
         {
           text: "วันที่",
           value: "due_date",
           align: "center",
           sortable: false,
-          class: "font-weight-bold"
+          class: "font-weight-bold",
+          cellClass: "font-weight-bold"
         },
         {
           text: "สถานะ",
           value: "status",
           align: "center",
           sortable: false,
-          class: "font-weight-bold"
+          class: "font-weight-bold",
+          cellClass: "font-weight-bold"
         },
         {
           text: "บริษัท",
           value: "company",
           align: "center",
           sortable: false,
-          class: "font-weight-bold"
+          class: "font-weight-bold",
+          cellClass: "font-weight-bold"
         }
       ],
       dateFilter: {
@@ -528,6 +646,21 @@ export default {
     }
   },
   methods: {
+    async handleOpenHistory(item) {
+      this.isLoading = true;
+      try {
+        let { data } = await this.$store.dispatch(
+          "getTransactionDeptloss",
+          item.id
+        );
+        this.transactionList = data;
+        this.isLoading = false;
+        this.dlTransaction = true;
+      } catch (error) {
+        this.isLoading = false;
+        console.log(error);
+      }
+    },
     searchdata(input = null, option = null) {
       let params = this.getParameter();
       params.keyword = input;

@@ -6,7 +6,7 @@
           <div class="bgdark_login pa-3 m-3">
             <v-form ref="loginform">
               <div class="pa-3">
-                <h2 class="text-center">SUPPORT SMARTBET</h2>
+                <h2 class="text-center">FINANCIAL SMARTBET</h2>
                 <div class="pa-2">
                   <v-text-field
                     label="username"
