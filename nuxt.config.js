@@ -52,9 +52,9 @@ export default {
   // Build Configuration: https://go.nuxtjs.dev/config-build
   build: {},
   router: {
-    mode: "history"
+    // mode: "history"
     // base: "/storage/dev-backoffice/"
-    // base: "/storage/backoffice/"
+    base: "/Project/"
   },
   env: {
     ALL_FINANCIAL_API: process.env.ALL_FINANCIAL_API
