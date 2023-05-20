@@ -31,16 +31,7 @@ export default {
     "@nuxtjs/vuetify",
     "@nuxtjs/axios"
   ],
-  axios: {
-    baseURL: "/",
-    proxy: true
-  },
-  proxy: {
-    "/v1alpha": {
-      target: "https://kong-api-proxy-qlws7pv5wa-as.a.run.app",
-      changeOrigin: true
-    }
-  },
+  axios: {},
 
   // Modules: https://go.nuxtjs.dev/config-modules
   modules: ["@nuxtjs/axios", "vue-sweetalert2/nuxt"],
@@ -50,9 +41,13 @@ export default {
   },
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
-  build: {},
+  build: {
+    analyze: {
+      analyzerMode: "static"
+    }
+  },
   router: {
-    // mode: "history"
+    mode: "history",
     // base: "/storage/dev-backoffice/"
     base: "/Project/"
   },
