@@ -49,7 +49,7 @@ export default {
   router: {
     mode: "history",
     // base: "/storage/dev-backoffice/"
-    base: "/Project/"
+    base: "/Project-Financial/"
   },
   env: {
     ALL_FINANCIAL_API: process.env.ALL_FINANCIAL_API
